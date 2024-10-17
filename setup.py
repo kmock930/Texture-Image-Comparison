@@ -1,49 +1,87 @@
 # from tensorflow.keras.preprocessing import image_dataset_from_directory
-import matplotlib.pyplot as plt
-import os
-import shutil # handle file operation: copying image files to another directory
+import matplotlib.pyplot as plt;
+import os;
+import shutil; # handle file operation: copying image files to another directory
+import re; # regular expression library
+import constants;
+from collections import defaultdict;
+import numpy as np;
 
-# Global variables
-PROJECT_ROOT_DIR = "."
-DATASET_DIR = os.path.join(PROJECT_ROOT_DIR, 'stoneflies')
-YOR_DIR = os.path.join(DATASET_DIR, 'yor')
-CAL_DIR = os.path.join(DATASET_DIR, 'cal')
-TEST_SIZE = 50
+# Function to recursively group files by image identifier
+def group_files_by_identifier(directory):
+    grouped_files = {};
 
-def load_images(dataset_dir, yor_dir, cal_dir, test_size): 
+    # Walk through all subdirectories and files, including 'set0', 'set1', 'set2'
+    for root, _, files in os.walk(directory):
+        for filename in files:
+            if (filename.endswith(constants.ALLOWED_IMAGE_FORMATS)): # ensures it is an image
+                if (filename.startswith(constants.CAL) or filename.startswith(constants.YOR)):
+                    full_path = os.path.join(root, filename);
+                    filename_split = re.split('_', re.split('-', filename)[0]);
+                    category = filename_split[0];
+                    id = filename_split[1];
+                    if (grouped_files.__contains__(id) == False):
+                        grouped_files[id] = [full_path];
+                    else:
+                        grouped_files[id].append(full_path);
+
+    return grouped_files
+
+def load_images(): 
+    # initialize training sets and test sets for each category respectively
+    yor_train_set = [];
+    yor_train_labels = np.array([]);
+
+    yor_test_set = [];
+    yor_test_labels = np.array([]);
+
+    cal_train_set = [];
+    cal_train_labels = np.array([]);
+
+    cal_test_set = [];
+    cal_test_labels = np.array([]);
 
     # Group files for each category
-    yor_groups = group_files_by_identifier(yor_dir)
-    cal_groups = group_files_by_identifier(cal_dir)
+    yor_groups = group_files_by_identifier(constants.YOR_DIR);
+    cal_groups = group_files_by_identifier(constants.CAL_DIR);
 
-    # Sort the groups
-    sorted_yor_ids = sorted(yor_groups.keys(), key=lambda x: int(x.split('_')[1]))
-    sorted_cal_ids = sorted(cal_groups.keys(), key=lambda x: int(x.split('_')[1]))
+    # Sort the groups to ensure consistency
+    sorted_yor_ids = sorted(yor_groups.items(), key=lambda id: int(id[0]));
+    sorted_cal_ids = sorted(cal_groups.items(), key=lambda id: int(id[0]));
 
-    # Select the first 50 unique images for the test set
-    yor_test_ids = sorted_yor_ids[:TEST_SIZE]
-    cal_test_ids = sorted_cal_ids[:TEST_SIZE]
+    # put data into training and test sets respectively
+    for item in sorted_yor_ids:
+        if (int(item[0]) < constants.TEST_SIZE):
+            yor_test_set += item[1];
+        else:
+            yor_train_set += item[1];
+    
+    for item in sorted_cal_ids:
+        if (int(item[0]) < constants.TEST_SIZE):
+            cal_test_set += item[1];
+        else:
+            cal_train_set += item[1];
+    
+    # Assign labels in all the sets
+    yor_test_labels = np.full(len(yor_test_set), constants.YOR);
+    yor_train_labels = np.full(len(yor_train_set), constants.YOR);
+    cal_test_labels = np.full(len(cal_test_set), constants.CAL);
+    cal_train_labels = np.full(len(cal_train_set), constants.CAL);
 
-    # Define test and train directories - for model to access
-    test_yor_dir = os.path.join(dataset_dir, 'test', 'yor')
-    test_cal_dir = os.path.join(dataset_dir, 'test', 'cal')
-    train_yor_dir = os.path.join(dataset_dir, 'train', 'yor')
-    train_cal_dir = os.path.join(dataset_dir, 'train', 'cal')
+    return {
+        # YOR
+        "YOR_TEST_SAMPLES": yor_test_set,
+        "YOR_TEST_LABELS": yor_test_labels,
+        "YOR_TRAIN_SAMPLES": yor_train_set,
+        "YOR_TRAIN_LABELS": yor_train_labels,
+        # CAL
+        "CAL_TEST_SAMPLES": cal_test_set,
+        "CAL_TEST_LABELS": cal_test_labels,
+        "CAL_TRAIN_SAMPLES": cal_train_set,
+        "CAL_TRAIN_LABELS": cal_train_labels,
+    };
 
-    # Copy test set files
-    copy_files(yor_groups, yor_test_ids, yor_dir, test_yor_dir)
-    copy_files(cal_groups, cal_test_ids, cal_dir, test_cal_dir)
-
-    # Assign remaining files for training
-    yor_train_ids = sorted_yor_ids[test_size:]
-    cal_train_ids = sorted_cal_ids[test_size:]
-
-    # Copy training set files
-    copy_files(yor_groups, yor_train_ids, YOR_DIR, train_yor_dir)
-    copy_files(cal_groups, cal_train_ids, CAL_DIR, train_cal_dir)
-
-    print("Data Splitting completed.")
-
+def preprocess():
     # point processing
 
     # histogram equalization - Adaptive equalization
@@ -62,36 +100,11 @@ def load_images(dataset_dir, yor_dir, cal_dir, test_size):
 
     # convolution: https://scikit-image.org/docs/stable/api/skimage.filters.html
 
-    # 
+    return
 
 def save_fig(img_cat, tight_layout=True):
     path = os.path.join(PROJECT_ROOT_DIR, img_cat + ".jpg")
     print("Saving figure", fig_id)
     if tight_layout:
-        plt.tight_layout()
-    plt.savefig(path, format='png', dpi=300)
-
-def group_files_by_identifier(directory):
-    import re
-    
-    grouped_files = {} # dict
-
-    # matching filenames with a regular expression
-    pattern = re.compile(r'(yor|cal)_(\d+)_\d+\.(jpg|jpeg|png)', re.IGNORECASE)
-    
-    for root, _, files in os.walk(directory):
-        for filename in os.listdir(directory):
-            match = pattern.match(filename)
-            if match:
-                category, id_num, ext = match.groups()
-                identifier = f"{category}_{id_num}"
-                grouped_files[identifier].append(filename)
-        return grouped_files
-
-def copy_files(file_groups, selected_ids, source_dir, dest_dir):
-    if not os.path.exists(dest_dir):
-        # create directory if not exists
-        os.makedirs(dest_dir)
-    for identifier in selected_ids:
-        for file in file_groups[identifier]:
-            shutil.copy(os.path.join(source_dir, file), os.path.join(dest_dir, file))
+        plt.tight_layout();
+    plt.savefig(path, format='png', dpi=300);
