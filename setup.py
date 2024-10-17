@@ -1,11 +1,14 @@
 # from tensorflow.keras.preprocessing import image_dataset_from_directory
 import matplotlib.pyplot as plt;
 import os;
-import shutil; # handle file operation: copying image files to another directory
 import re; # regular expression library
 import constants;
-from collections import defaultdict;
 import numpy as np;
+from skimage.io import imread;
+from skimage import exposure;
+from skimage.transform import resize;
+from skimage.color import rgb2gray;
+from skimage.filters import gaussian, sobel;
 
 # Function to recursively group files by image identifier
 def group_files_by_identifier(directory):
@@ -27,7 +30,10 @@ def group_files_by_identifier(directory):
 
     return grouped_files
 
-def load_images(): 
+'''
+Load Image Paths
+'''
+def load_images_paths(): 
     # initialize training sets and test sets for each category respectively
     yor_train_set = [];
     yor_train_labels = np.array([]);
@@ -81,26 +87,44 @@ def load_images():
         "CAL_TRAIN_LABELS": cal_train_labels,
     };
 
-def preprocess():
-    # point processing
+'''
+Load actual images into a numpy array.
+'''
+def load_images(paths_list: list):
+    images = np.empty((0, constants.img_height, constants.img_width));
+    for path in paths_list:
+        img = imread(path);
+        img_array = np.array(img);
+        img_array = preprocess(img_array);
+        images = np.append(images, [img_array], axis=0);
+    return images;
+
+def preprocess(img_array: np.ndarray):
+    # Resizing to make the image smaller in resolution
+    img_array = setResolution(img_array);
+
+    # Grayscale
+    img_array = rgb2gray(img_array);
+
+    # Normalize to [0,1] range
+    img_array = normalize(img_array);
+
+    # point processing - Gamma Correction
+    # to adjust the brightness
+    img_array = exposure.adjust_gamma(img_array, gamma=constants.gamma);
 
     # histogram equalization - Adaptive equalization
-
-    # image sampling and reconstruction - https://medium.com/swlh/image-processing-with-python-digital-image-sampling-and-quantization-4d2c514e0f00
-
-    # linear filtering python: https://scikit-image.org/skimage-tutorials/lectures/1_image_filters.html
-
-    # cross correlation: https://scikit-image.org/docs/stable/auto_examples/registration/plot_register_translation.html
-
-    # box filter: https://scikit-image.org/docs/stable/api/skimage.filters.html
+    img_array = exposure.equalize_hist(img_array);
 
     # sobel edge filter: https://scikit-image.org/docs/stable/auto_examples/edges/plot_edge_filter.html
+    # for edge detection
+    img_array = sobel(img_array);
 
     # Gaussian blur: https://scikit-image.org/docs/dev/api/skimage.filters.html#skimage.filters.gaussian
+    # for smooting
+    img_array = gaussian(img_array, sigma=constants.gaussianSigma); # sigma = standard deviation for the kernel
 
-    # convolution: https://scikit-image.org/docs/stable/api/skimage.filters.html
-
-    return
+    return img_array;
 
 def save_fig(img_cat, tight_layout=True):
     path = os.path.join(PROJECT_ROOT_DIR, img_cat + ".jpg")
@@ -108,3 +132,10 @@ def save_fig(img_cat, tight_layout=True):
     if tight_layout:
         plt.tight_layout();
     plt.savefig(path, format='png', dpi=300);
+
+
+def normalize(img_array: np.ndarray):
+    return img_array / 255.0;  # Normalize to [0, 1] range
+
+def setResolution(img_array: np.ndarray):
+    return resize(img_array, (constants.img_height, constants.img_width));
