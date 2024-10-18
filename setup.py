@@ -98,18 +98,19 @@ def load_images(paths_list: list, category: str):
 
     images = np.empty((0, constants.img_height, constants.img_width));
     currInd = 0;
-    for path in paths_list:
-        if (currInd == randInd):
-            displayImage(img_array, category, isBefore=True);
-    
+    for path in paths_list:   
         img = imread(path);
         img_array = np.array(img);
+
+        if (currInd == randInd):
+            displayImage(img_array, category, isBefore=True);
+
         img_array = preprocess(img_array);
-        images = np.append(images, [img_array], axis=0);
 
         if (currInd == randInd):
             displayImage(img_array, category, isBefore=False);
         
+        images = np.append(images, [img_array], axis=0);
         currInd += 1; # next image
     return images;
 
@@ -140,14 +141,6 @@ def preprocess(img_array: np.ndarray):
 
     return img_array;
 
-def save_fig(img_cat, tight_layout=True):
-    path = os.path.join(PROJECT_ROOT_DIR, img_cat + ".jpg")
-    print("Saving figure", fig_id)
-    if tight_layout:
-        plt.tight_layout();
-    plt.savefig(path, format='png', dpi=300);
-
-
 def normalize(img_array: np.ndarray):
     return img_array / 255.0;  # Normalize to [0, 1] range
 
@@ -158,8 +151,8 @@ def displayImage(img_array: np.ndarray, category: str, isBefore):
     if (isBefore == True):
         plt.title(f"Sample Image in {category} category BEFORE being processed");
         plt.imshow(img_array);
-        plt.show();
     else:
         plt.title(f"Sample Image in {category} category AFTER being processed");
         plt.imshow(img_array, cmap="gray");
-        plt.show();
+    
+    plt.show();
