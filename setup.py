@@ -9,6 +9,8 @@ from skimage import exposure;
 from skimage.transform import resize;
 from skimage.color import rgb2gray;
 from skimage.filters import gaussian, sobel;
+import random;
+from matplotlib import pyplot as plt;
 
 # Function to recursively group files by image identifier
 def group_files_by_identifier(directory):
@@ -90,13 +92,25 @@ def load_images_paths():
 '''
 Load actual images into a numpy array.
 '''
-def load_images(paths_list: list):
+def load_images(paths_list: list, category: str):
+    # Randomize an index in each category to display image
+    randInd = random.randint(0,len(paths_list)-1);
+
     images = np.empty((0, constants.img_height, constants.img_width));
+    currInd = 0;
     for path in paths_list:
+        if (currInd == randInd):
+            displayImage(img_array, category, isBefore=True);
+    
         img = imread(path);
         img_array = np.array(img);
         img_array = preprocess(img_array);
         images = np.append(images, [img_array], axis=0);
+
+        if (currInd == randInd):
+            displayImage(img_array, category, isBefore=False);
+        
+        currInd += 1; # next image
     return images;
 
 def preprocess(img_array: np.ndarray):
@@ -139,3 +153,13 @@ def normalize(img_array: np.ndarray):
 
 def setResolution(img_array: np.ndarray):
     return resize(img_array, (constants.img_height, constants.img_width));
+
+def displayImage(img_array: np.ndarray, category: str, isBefore):
+    if (isBefore == True):
+        plt.title(f"Sample Image in {category} category BEFORE being processed");
+        plt.imshow(img_array);
+        plt.show();
+    else:
+        plt.title(f"Sample Image in {category} category AFTER being processed");
+        plt.imshow(img_array, cmap="gray");
+        plt.show();
