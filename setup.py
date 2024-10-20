@@ -11,6 +11,7 @@ from skimage.color import rgb2gray;
 from skimage.filters import gaussian, sobel;
 import random;
 from matplotlib import pyplot as plt;
+import joblib;
 
 # Function to recursively group files by image identifier
 def group_files_by_identifier(directory):
@@ -156,3 +157,8 @@ def displayImage(img_array: np.ndarray, category: str, isBefore):
         plt.imshow(img_array, cmap="gray");
     
     plt.show();
+
+# Load Images from .pkl files
+def unpack(filepath):
+    with open(filepath, 'rb') as file:
+        return joblib.load(file);
