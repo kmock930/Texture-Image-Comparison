@@ -21,8 +21,14 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt  # Ensure you have the required dependencies listed in this file, including Jupyter
-
+        pip install numpy
+        pip install tensorflow == 2.10.0
+        pip install tensorflow-gpu==2.10.0
+        pip install matplotlib
+        pip install scikit-image
+        pip install scikit-learn
+        pip install keras
+        pip install joblib
     - name: Run Jupyter Notebook
       run: |
         jupyter nbconvert --to notebook --execute --CSI5341 Assignment 2 - Kelvin Mock 300453668.ipynb
