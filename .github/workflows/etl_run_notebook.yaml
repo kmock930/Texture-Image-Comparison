@@ -20,7 +20,7 @@ jobs:
 
     - name: Run Jupyter Notebook
       run: |
-        jupyter nbconvert --to notebook --execute --CSI5341 Assignment 2 - Kelvin Mock 300453668.ipynb
+        jupyter nbconvert --to notebook --execute --"CSI5341 Assignment 2 - Kelvin Mock 300453668.ipynb"
 
     - name: Upload notebook as artifact
       uses: actions/upload-artifact@v3
