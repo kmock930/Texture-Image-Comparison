@@ -20,12 +20,21 @@ num_classes = 2;
 batch_size = 128;
 num_epochs = 50;
 learning_rate = 0.005;
-input_shape = (int(img_height),);
+input_shape_mlp = (int(img_height),);
 
 optimizer_mlp = 'adam';
 loss_mlp = 'binary_crossentropy';
 activaton_mlp_tensor1 = 'relu';
 activaton_mlp_tensor2 = 'sigmoid';
+
+# CNN
+input_shape_cnn = (img_height, img_width, 1); # for grayscale images
+pool_size = 2;
+strides = 2;
+filter = 64;
+cnn_kernel_size = (3,3);
+activation1_cnn = "relu";
+activation2_cnn = "sigmoid";
 
 # evaluation
 metrics = ['accuracy'];

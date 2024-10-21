@@ -94,3 +94,4 @@ def visualizeMisclassified(X_test: np.ndarray, y_test: np.ndarray, y_pred: np.nd
             category=category,
             isBefore=False
         );
+        print(f"Number of misclassified images for this model: {len(misclassifiedInds)}");

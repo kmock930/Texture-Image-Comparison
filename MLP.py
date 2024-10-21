@@ -22,7 +22,7 @@ class MLP:
         # Add a Flatten layer to convert (64, 64, 1) to (4096,)
         model.add(keras.layers.Flatten(input_shape=(constants.img_height, constants.img_width, 1)));
 
-        layer1 = keras.layers.Dense(constants.img_height, input_shape=constants.input_shape, activation=constants.activaton_mlp_tensor1);
+        layer1 = keras.layers.Dense(constants.img_height, input_shape=constants.input_shape_mlp, activation=constants.activaton_mlp_tensor1);
         model.add(layer1); #relu
 
         layer2 = keras.layers.Dense(round(math.log(2, constants.num_classes)), activation=constants.activaton_mlp_tensor2); #sigmoid
