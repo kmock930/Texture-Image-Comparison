@@ -34,7 +34,13 @@ class MLP:
         model.build((None, constants.img_height, constants.img_width));
         
         # compile model
-        model.compile(loss=constants.loss_mlp, optimizer=constants.optimizer_mlp, metrics=constants.metrics);
+        model.compile(
+            loss=constants.loss_mlp, 
+            optimizer=constants.optimizer_mlp, 
+            metrics=[
+                keras.metrics.BinaryAccuracy(name="acc")
+            ]
+        );
         self.model = model;
 
         #save the compiled model
@@ -50,16 +56,9 @@ class MLP:
 
         # Create Adam optimizer with weight decay.
         optimizer = keras.optimizers.Adam(
-            learning_rate=constants.learning_rate
+            learning_rate=constants.mlp_learning_rate
         )
-        # Compile the model.
-        self.model.compile(
-            optimizer=optimizer,
-            loss=keras.losses.BinaryCrossentropy(from_logits=False),
-            metrics=[
-                keras.metrics.BinaryAccuracy(name="acc")
-            ],
-        )
+        
         # Create a learning rate scheduler callback.
         reduce_lr = keras.callbacks.ReduceLROnPlateau(
             monitor="val_loss", factor=0.5, patience=5

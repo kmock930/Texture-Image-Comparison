@@ -19,7 +19,7 @@ gaussianSigma = 1;
 num_classes = 2;
 batch_size = 128;
 num_epochs = 50;
-learning_rate = 0.005;
+mlp_learning_rate = 0.005;
 input_shape_mlp = (int(img_height),);
 
 optimizer_mlp = 'adam';
@@ -35,6 +35,10 @@ filter = 64;
 cnn_kernel_size = (3,3);
 activation1_cnn = "relu";
 activation2_cnn = "sigmoid";
+cnn_loss = "binary_crossentropy";
+cnn_learning_rate=0.001;
+cnn_steps_per_epoch = 8;
+cnn_verbose = 1;
 
 # evaluation
 metrics = ['accuracy'];
