@@ -1,17 +1,18 @@
 import keras;
 from keras import layers;
-
+import constants;
 
 class MLPMixerLayer(layers.Layer):
     def __init__(self, num_patches, hidden_units, dropout_rate, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        hidden_units = int(hidden_units)
 
         
         self.mlp1 = keras.Sequential(
             [
-                layers.Dense(units=num_patches * hidden_units, activation="gelu"),
-                layers.Dense(units=hidden_units),
-                layers.Reshape((-1, hidden_units)),
+                layers.Dense(units=num_patches, activation="gelu"),
+                layers.Dense(units=constants.embedding_dim),
+                layers.Reshape((hidden_units, -1)),  # Ensure hidden_units is an integer
                 layers.Dropout(rate=dropout_rate),
             ]
         )
@@ -19,6 +20,7 @@ class MLPMixerLayer(layers.Layer):
             [
                 layers.Dense(units=hidden_units, activation="gelu"),
                 layers.Dense(units=hidden_units),
+                layers.Reshape((hidden_units, -1)),  # Ensure hidden_units is an integer
                 layers.Dropout(rate=dropout_rate),
             ]
         )

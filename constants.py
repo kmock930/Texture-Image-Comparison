@@ -17,14 +17,22 @@ gaussianSigma = 1;
 channels = 1; # grayscale
 
 # MLP
-num_classes = 100;
+num_classes = 2;
 weight_decay = 0.0001;
 batch_size = 128;
 num_epochs = 50;
 dropout_rate = 0.2;
-patch_size = (32, 16);  # Size of the patches to be extracted from the input images.
-num_patches = (img_height // patch_size[0]) * ((img_width // patch_size[1]));  # Size of the data array.
+patch_size = (img_height, img_width);  # Size of the patches to be extracted from the input images.
+num_patches = int( (img_height // patch_size[0]) * ((img_width // patch_size[1])) );  # Size of the data array.
 embedding_dim = 256;  # Number of hidden units.
 num_blocks = 4;  # Number of blocks.
 learning_rate = 0.005;
-input_shape = (img_height, img_width, channels);
+input_shape = (int(img_height),);
+
+optimizer_mlp = 'adam';
+loss_mlp = 'binary_crossentropy';
+activaton_mlp_tensor1 = 'relu';
+activaton_mlp_tensor2 = 'sigmoid';
+
+# evaluation
+metrics = ['accuracy'];

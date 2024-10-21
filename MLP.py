@@ -1,66 +1,58 @@
+from tensorflow.keras.layers import Dense;
 import keras;
-from keras import layers;
-from keras.layers import RandomFlip, RandomRotation
 import constants;
-from Patches import Patches;
-from PositionEmbedding import PositionEmbedding;
-from MLPMixerLayer import MLPMixerLayer;
 import numpy as np;
-from sklearn.preprocessing import LabelEncoder, StandardScaler;
+from sklearn.preprocessing import LabelEncoder;
+import math;
+import joblib;
+import matplotlib.pyplot as plt;
 
 class MLP:
     model: keras.Model;
 
-    mlpmixer_blocks = keras.Sequential(
-        [MLPMixerLayer(constants.num_patches, constants.embedding_dim, constants.dropout_rate) for _ in range(constants.num_blocks)]
-    );
-
     def __init__(self):
-        self.model = self.build_classifier(blocks=self.mlpmixer_blocks);
+        self.model = self.build_classifier();
 
-    data_augmentation = keras.Sequential(
-        [
-            RandomFlip("horizontal"),
-            RandomRotation(0.1),
-        ]
-    );
+    # https://machinelearningmastery.com/binary-classification-tutorial-with-the-keras-deep-learning-library/
+    def build_classifier(self):
+        # baseline model
+        model = keras.Sequential();
+        # add tensors
+        # Add a Flatten layer to convert (64, 64, 1) to (4096,)
+        model.add(keras.layers.Flatten(input_shape=(constants.img_height, constants.img_width, 1)));
 
-    # https://keras.io/examples/vision/mlp_image_classification/    
-    def build_classifier(self, blocks, positional_encoding=False):
-        inputs = layers.Input(shape=constants.input_shape)
-        # Augment data.
-        augmented = self.data_augmentation(inputs)
-        # Create patches.
-        patches = Patches(constants.patch_size)(augmented)
-        # Encode patches to generate a [batch_size, num_patches, embedding_dim] tensor.
-        x = layers.Dense(units=constants.embedding_dim)(patches)
-        if positional_encoding:
-            x = x + PositionEmbedding(sequence_length=constants.num_patches)(x)
-        # Process x using the module blocks.
-        x = blocks(x)
-        # Apply global average pooling to generate a [batch_size, embedding_dim] representation tensor.
-        representation = layers.GlobalAveragePooling1D()(x)
-        # Apply dropout.
-        representation = layers.Dropout(rate=constants.dropout_rate)(representation)
-        # Compute logits outputs.
-        logits = layers.Dense(constants.num_classes)(representation)
-        # Create the Keras model.
-        return keras.Model(inputs=inputs, outputs=logits)
+        layer1 = keras.layers.Dense(constants.img_height, input_shape=constants.input_shape, activation=constants.activaton_mlp_tensor1);
+        model.add(layer1); #relu
+
+        layer2 = keras.layers.Dense(round(math.log(2, constants.num_classes)), activation=constants.activaton_mlp_tensor2); #sigmoid
+        model.add(layer2); #sigmoid
+
+        #save the pretrained model (not built yet)
+        joblib.dump(model, 'MLP-pretrained.pkl');
+
+        model.build((None, constants.img_height, constants.img_width));
+        
+        # compile model
+        model.compile(loss=constants.loss_mlp, optimizer=constants.optimizer_mlp, metrics=constants.metrics);
+        self.model = model;
+
+        #save the compiled model
+        joblib.dump(model, 'MLP_compiled.pkl');
+
+        return model;
     
     # train the model
     def train(self, X_train: np.ndarray, y_train: np.ndarray, X_test: np.ndarray, y_test: np.ndarray):
         # Create Adam optimizer with weight decay.
-        optimizer = keras.optimizers.AdamW(
-            learning_rate=constants.learning_rate,
-            weight_decay=constants.weight_decay,
+        optimizer = keras.optimizers.Adam(
+            learning_rate=constants.learning_rate
         )
         # Compile the model.
         self.model.compile(
             optimizer=optimizer,
-            loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+            loss=keras.losses.BinaryCrossentropy(from_logits=False),
             metrics=[
-                keras.metrics.SparseCategoricalAccuracy(name="acc"),
-                keras.metrics.SparseTopKCategoricalAccuracy(5, name="top5-acc"),
+                keras.metrics.BinaryAccuracy(name="acc")
             ],
         )
         # Create a learning rate scheduler callback.
@@ -80,27 +72,41 @@ class MLP:
             validation_split=0.1,
             callbacks=[early_stopping, reduce_lr],
             verbose=0,
-        )
+        );
 
-        _, accuracy, top_5_accuracy = self.model.evaluate(X_test, y_test)
+        # save the post-trained model
+        joblib.dump(self.model, 'MLP_posttrained.pkl');
+
+        loss, accuracy = self.model.evaluate(X_test, y_test)
         print(f"Test accuracy: {round(accuracy * 100, 2)}%")
-        print(f"Test top 5 accuracy: {round(top_5_accuracy * 100, 2)}%")
 
         # Return history to plot learning curves.
         return history
      
-    def normalize(X_train, X_test, y_train, y_test):
-        le = LabelEncoder(); # convert categorical labels into numeric representation
+    def normalize(self, X_train, X_test, y_train, y_test):
+        le = LabelEncoder();  # convert categorical labels into numeric representation
         y_train = le.fit_transform(y_train);
         y_test = le.fit_transform(y_test);
 
-        X_train = X_train / (constants.img_height - 1); # normalize to the range [0,1]
-        X_test = X_test / (constants.img_height - 1); # normalize to the range [0,1]
+        X_train = X_train / (constants.img_height - 1);  # normalize to the range [0,1]
+        X_test = X_test / (constants.img_height - 1);  # normalize to the range [0,1]
         
-        # the shape of the image samples are not fitting a 4D tensor
+        # Check if the image samples need to be reshaped to fit a 4D tensor
         if len(X_train.shape) == 3:
             X_train = np.expand_dims(X_train, axis=-1);
         if len(X_test.shape) == 3:
             X_test = np.expand_dims(X_test, axis=-1);
 
         return X_train, y_train, X_test, y_test;
+
+    def predict(X_test: np.ndarray):
+        return 
+
+    def plotLearningCurve(history):
+        # Plot training & validation accuracy values
+        plt.plot(history.history['acc']);
+        plt.title('Learning Curve - Model vs Accuracy');
+        plt.ylabel('Accuracy');
+        plt.xlabel('Epoch');
+        plt.legend(['Train'], loc='upper left');
+        plt.show();
