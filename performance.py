@@ -42,7 +42,9 @@ def printConfMtx(y_pred: np.ndarray, y_test: np.ndarray):
     class_names = [constants.YOR, constants.CAL]
     
     # Convert to DataFrame with class names
-    confMtx_df = pd.DataFrame(confMtx, index=class_names, columns=class_names)
+    confMtx_df = pd.DataFrame(confMtx, index=class_names, columns=class_names);
+    confMtx_df.index.name = 'Actual';
+    confMtx_df.columns.name = 'Predicted';
     
     return confMtx_df
 
@@ -94,4 +96,4 @@ def visualizeMisclassified(X_test: np.ndarray, y_test: np.ndarray, y_pred: np.nd
             category=category,
             isBefore=False
         );
-        print(f"Number of misclassified images for this model: {len(misclassifiedInds)}");
+        print(f"Number of misclassified images for this model: {len(misclassifiedInds)} out of total {len(evalArr)} images in the set.");
