@@ -162,3 +162,10 @@ def displayImage(img_array: np.ndarray, category: str, isBefore):
 def unpack(filepath):
     with open(filepath, 'rb') as file:
         return joblib.load(file);
+
+def convertPredArray(y_pred: np.ndarray):
+    y_new_pred = np.array([]);
+    if (y_pred.ndim > 1):
+        for prediction in y_pred:
+            y_new_pred = np.append(y_new_pred, prediction[0]);
+    return y_new_pred;

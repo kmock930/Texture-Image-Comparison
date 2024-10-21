@@ -6,6 +6,7 @@ from sklearn.preprocessing import LabelEncoder;
 import math;
 import joblib;
 import matplotlib.pyplot as plt;
+from datetime import datetime; # for timestamp
 
 class MLP:
     model: keras.Model;
@@ -42,7 +43,11 @@ class MLP:
         return model;
     
     # train the model
+    # https://machinelearningmastery.com/binary-classification-tutorial-with-the-keras-deep-learning-library/
     def train(self, X_train: np.ndarray, y_train: np.ndarray, X_test: np.ndarray, y_test: np.ndarray):
+        print("-----started training MLP model-----");
+        startTime = datetime.now();
+
         # Create Adam optimizer with weight decay.
         optimizer = keras.optimizers.Adam(
             learning_rate=constants.learning_rate
@@ -80,6 +85,11 @@ class MLP:
         loss, accuracy = self.model.evaluate(X_test, y_test)
         print(f"Test accuracy: {round(accuracy * 100, 2)}%")
 
+        print("-----The MLP model is completedly trained-----");
+        endTime = datetime.now();
+        timeElapsed = endTime - startTime;
+        print(f"Training Time Elapsed: {timeElapsed}");
+
         # Return history to plot learning curves.
         return history
      
@@ -99,8 +109,18 @@ class MLP:
 
         return X_train, y_train, X_test, y_test;
 
-    def predict(X_test: np.ndarray):
-        return 
+    def predict(self, X_test: np.ndarray):
+        print("-----Started Predicting test samples-----");
+        startTime = datetime.now();
+
+        y_pred = self.model.predict(X_test);
+    
+        endTime = datetime.now();
+        timeElapsed = endTime - startTime;
+        print("-----Prediction completed-----");
+        print(f"Prediction Time Elapsed: {timeElapsed}");
+    
+        return y_pred;
 
     def plotLearningCurve(history):
         # Plot training & validation accuracy values
